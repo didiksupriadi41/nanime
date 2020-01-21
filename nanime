@@ -170,3 +170,105 @@ start_mpv() {
   echo "$@" \
     | xargs -r ${MPV};
 };
+
+enjoy() {
+  validate_episode_bound;
+
+  TOTAL=$(( ${END} - ${BEGIN} + 1 ));
+  EPS=($(get_episode_url ${LINK}));
+
+  say loading $TOTAL episodes >&2;
+
+  j=0;
+  for (( i=${BEGIN}-1; i<${END}; i++)) {
+    FILES+=(
+      $(
+        mktemp --tmpdir='/tmp' nanime.$(get_episode_title ${LINK})-episode-$((j + 1)).XXX
+      )
+    );
+    trap "clean_temp_files" EXIT;
+    get_video_url ${EPS[$i]} >> ${FILES[$j]} &
+
+    j=$(( j + 1 ));
+    progress_bar "$j";
+    # Experiment:
+    # Wait every N curl operation.
+    #
+    # if (( $j % 240 == 0 )); then
+    #   # warn waiting phase $(( $j / 240 ))
+    #   wait
+    # fi
+  };
+
+  printf "nanime: [$percent%%] $bar\n" >&2;
+  printf "nanime: all loader started successfully\n\n" >&2;
+  printf "nanime: wait loader to finish\n" >&2;
+  printf "nanime: waiting..\r" >&2;
+  wait;
+  printf "nanime: waiting.. done!\n\n" >&2;
+
+  # TODO: HISTORIC
+  # Default server
+  # (Doesn't works in 2020)
+  #
+  # SOURCES+=$(cat "${FILES[@]}" \
+  #   | grep 'data-src' \
+  #   | awk -F"\"" '{print $2}')
+
+  # TODO: PROTOTYPE
+  # SOURCES+=$(cat "${FILES[@]}" \
+  #   | grep 'link_server' \
+  #   | awk -F"\"" '{print $4}')
+
+  # TODO: PROTOTYPE
+  # SOURCES+=$(cat "${FILES[@]}" \
+  #   | awk -F"\"" '/link_server/ && /uservideo/ {print $4;}')
+
+  # TODO: HISTORIC
+  # Naniplay server
+  #
+  # SOURCES+=$(curl https://www.naniplay.com/api/source/$(cat "${FILES[@]}" \
+  #   | grep 'change-server' \
+  #   | awk -F"\"" '{print $12}' \
+  #   | xargs curl 2>/dev/null \
+  #   | awk -F"v/" '{print $2}') \
+  #   --data 'd=naniplay.com' 2>/dev/null \
+  #   | jq '.data[0] .file')
+  # echo $SOURCES
+
+  # TODO: HISTORIC
+  # SOURCES+=$(cat "${FILES[@]}" \
+  #   | grep 'change-server' \
+  #   | awk -F"\"" '{print $12}')
+
+  # TODO: HISTORIC
+  # for i in
+    # | xargs curl 2>/dev/null)
+    # | awk -F"v/" '{print $2}') \
+    # --data 'd=naniplay.com' 2>/dev/null \
+    # | jq '.data[0] .file'
+
+  for file in "${FILES[@]}"; do
+    test -f "${file}";
+  done && SOURCES+=$(cat "${FILES[@]}");
+  clean_temp_files;
+
+  SOURCES=(${SOURCES[@]}); # remove empty elements
+
+  NUM_LOADED=${#SOURCES[@]};
+  NUM_EPS=${#FILES[@]};
+  NUM_MISSED=$(( $NUM_EPS - $NUM_LOADED ));
+
+  (( $NUM_LOADED < $NUM_EPS )) \
+    && warn $NUM_MISSED episodes can not be loaded due to \'unavailability\' or \'URL inconsistency\' >&2;
+  if (( ${NUM_LOADED} == 0 )); then
+    warn not found on current server;
+    # TODO: HISTORIC
+    # warn changing server to naniplay
+    # naniplay
+  fi;
+
+  say loaded ${NUM_LOADED}/${NUM_EPS} episodes >&2;
+
+  start_mpv "${SOURCES[@]}";
+};
