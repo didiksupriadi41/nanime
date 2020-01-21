@@ -158,3 +158,10 @@ clean_temp_files() {
     rm -f $i
   done
 };
+
+progress_bar() {
+  progress=$(( "$1" * 30 / $TOTAL ));
+  bar=$(eval "printf '#%.0s' {1.."$(($progress))"}");
+  percent=$(( "$1" * 100 / $TOTAL ));
+  printf "nanime: ($percent%%) $bar\r" >&2;
+};
