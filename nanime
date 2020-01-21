@@ -44,3 +44,12 @@ say() {
 warn() {
   say "${YELLOW}[warning] $@${NOCOLOR}";
 };
+
+host_unresolved_alert() {
+  say "could not resolve host";
+  say "host should looks like: http[s]://..";
+};
+
+miss_arguments_alert() {
+  warn "missing arguments";
+};
