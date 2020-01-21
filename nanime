@@ -65,3 +65,23 @@ license() {
   echo "This is free software, and you are welcome to redistribute it";
   echo "under certain conditions; type \`show c' for details.";
 };
+
+get_episode_url() {
+  CODE='
+    BEGIN {
+      FS="(<tr><td><a href=\"|\">)";
+      OFS="\n";
+    }
+
+    /table-episode/ {
+      for (i = NF; i >= 1; i--) {
+        if ($i ~ /http/) {
+          print $i;
+        }
+      }
+    }
+  ';
+
+  ${CURL} "$1" 2>/dev/null \
+    | awk "$CODE";
+};
