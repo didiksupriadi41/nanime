@@ -131,3 +131,24 @@ get_video_url() {
   ${CURL} "$1" 2>/dev/null \
     | awk "$CODE";
 };
+
+validate_episode_bound() {
+  MIN=1;
+  MAX=$(get_total_episode ${LINK});
+
+  if (( ${BEGIN} < $MIN )); then
+    warn ${BEGIN} is under the minimum episode number;
+    warn changing start episode to $MIN;
+    BEGIN=$MIN;
+  fi;
+
+  if [[ -n $MAX ]] && (( $MAX > 0 )); then
+    if (( ${END} > $MAX )); then
+      warn ${END} is exceeding the maximum number of episodes in requested anime;
+      warn changing last episode to $MAX;
+      END=$MAX;
+    fi;
+  else
+    warn the maximum number of episodes from the requested anime is unknown;
+  fi;
+};
