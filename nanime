@@ -99,3 +99,20 @@ get_episode_title() {
 
   echo "$1" | awk "$CODE";
 };
+
+get_total_episode() {
+  CODE='
+    BEGIN {
+      FS="(<|</)td>";
+    }
+
+    /Total Episode/ {
+      if ( $23 ~ /^[0-9]+$/ ) {
+        print $23;
+      }
+    }
+  ';
+
+  ${CURL} "$1" 2>/dev/null \
+    | awk "$CODE";
+};
