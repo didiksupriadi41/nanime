@@ -139,7 +139,8 @@ get_video_url() {
 
 validate_episode_bound() {
   MIN=1;
-  MAX=$(get_total_episode ${LINK});
+  EPS=($(get_episode_url ${LINK}));
+  MAX="${#EPS[@]}";
 
   if (( ${BEGIN} < $MIN )); then
     warn ${BEGIN} is under the minimum episode number;
@@ -180,7 +181,6 @@ enjoy() {
   validate_episode_bound;
 
   TOTAL=$(( ${END} - ${BEGIN} + 1 ));
-  EPS=($(get_episode_url ${LINK}));
 
   say loading $TOTAL episodes >&2;
 
