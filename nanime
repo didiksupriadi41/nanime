@@ -124,7 +124,12 @@ get_video_url() {
     }
 
     /link_server/ && /uservideo/ {
-      print $8
+      for (i = 1; i <= NF; i++) {
+        if ($i ~ /http/ && $i ~ /uservideo/) {
+          print $i;
+          exit;
+        }
+      }
     }
   ';
 
