@@ -1,0 +1,287 @@
+#!/bin/sh
+# ---------------------------------------------------------------------
+# Author: Didik Supriadi
+# ---------------------------------------------------------------------
+# Nanime is a script to easily watch anime from nanime.tv
+# Copyright (C) 2020  Didik Supriadi
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+# ---------------------------------------------------------------------
+# Usage:
+#   nanime <anime-url-from-nanime> <start-episode> <end-episode>
+# ---------------------------------------------------------------------
+
+LINK="$1";
+BEGIN="$2";
+END="$3";
+PARAM="$@";
+
+CURL=$(command -v curl);
+MPV=$(command -v mpv);
+
+declare -a EPS;
+declare -a FILES;
+declare -a SOURCES;
+
+YELLOW='\033[1;33m';
+NOCOLOR='\033[0m';
+
+say() {
+  echo -e "nanime: $@";
+};
+
+warn() {
+  say "${YELLOW}[warning] $@${NOCOLOR}";
+};
+
+host_unresolved_alert() {
+  say "could not resolve host";
+  say "host should looks like: http[s]://..";
+};
+
+miss_arguments_alert() {
+  warn "missing arguments";
+};
+
+usage() {
+  say "usage:";
+  say "nanime <anime-url-from-nanime> <start-episode> <end-episode>";
+};
+
+license() {
+  echo "Nanime  Copyright (C) 2019  Didik Supriadi";
+  echo "This program comes with ABSOLUTELY NO WARRANTY; for details type \`show w'.";
+  echo "This is free software, and you are welcome to redistribute it";
+  echo "under certain conditions; type \`show c' for details.";
+};
+
+get_episode_url() {
+  CODE='
+    BEGIN {
+      FS="(<tr><td><a href=\"|\">)";
+      OFS="\n";
+    }
+
+    /table-episode/ {
+      for (i = NF; i >= 1; i--) {
+        if ($i ~ /http/) {
+          print $i;
+        }
+      }
+    }
+  ';
+
+  ${CURL} "$1" 2>/dev/null \
+    | awk "$CODE";
+};
+
+get_episode_title() {
+  CODE='
+    BEGIN {
+      FS="anime/";
+    }
+
+    {
+      print $2;
+    }
+  ';
+
+  echo "$1" | awk "$CODE";
+};
+
+get_total_episode() {
+  CODE='
+    BEGIN {
+      FS="(<|</)td>";
+    }
+
+    /Total Episode/ {
+      if ( $23 ~ /^[0-9]+$/ ) {
+        print $23;
+      }
+    }
+  ';
+
+  ${CURL} "$1" 2>/dev/null \
+    | awk "$CODE";
+};
+
+get_video_url() {
+  CODE='
+    BEGIN {
+      FS="(value=\"|\")";
+    }
+
+    /link_server/ && /uservideo/ {
+      print $8
+    }
+  ';
+
+  ${CURL} "$1" 2>/dev/null \
+    | awk "$CODE";
+};
+
+validate_episode_bound() {
+  MIN=1;
+  MAX=$(get_total_episode ${LINK});
+
+  if (( ${BEGIN} < $MIN )); then
+    warn ${BEGIN} is under the minimum episode number;
+    warn changing start episode to $MIN;
+    BEGIN=$MIN;
+  fi;
+
+  if [[ -n $MAX ]] && (( $MAX > 0 )); then
+    if (( ${END} > $MAX )); then
+      warn ${END} is exceeding the maximum number of episodes in requested anime;
+      warn changing last episode to $MAX;
+      END=$MAX;
+    fi;
+  else
+    warn the maximum number of episodes from the requested anime is unknown;
+  fi;
+};
+
+clean_temp_files() {
+  for i in "${FILES[@]}"; do
+    rm -f $i
+  done
+};
+
+progress_bar() {
+  progress=$(( "$1" * 30 / $TOTAL ));
+  bar=$(eval "printf '#%.0s' {1.."$(($progress))"}");
+  percent=$(( "$1" * 100 / $TOTAL ));
+  printf "nanime: ($percent%%) $bar\r" >&2;
+};
+
+start_mpv() {
+  echo "$@" \
+    | xargs -r ${MPV};
+};
+
+enjoy() {
+  validate_episode_bound;
+
+  TOTAL=$(( ${END} - ${BEGIN} + 1 ));
+  EPS=($(get_episode_url ${LINK}));
+
+  say loading $TOTAL episodes >&2;
+
+  j=0;
+  for (( i=${BEGIN}-1; i<${END}; i++)) {
+    FILES+=(
+      $(
+        mktemp --tmpdir='/tmp' nanime.$(get_episode_title ${LINK})-episode-$((j + 1)).XXX
+      )
+    );
+    trap "clean_temp_files" EXIT;
+    get_video_url ${EPS[$i]} >> ${FILES[$j]} &
+
+    j=$(( j + 1 ));
+    progress_bar "$j";
+    # Experiment:
+    # Wait every N curl operation.
+    #
+    # if (( $j % 240 == 0 )); then
+    #   # warn waiting phase $(( $j / 240 ))
+    #   wait
+    # fi
+  };
+
+  printf "nanime: [$percent%%] $bar\n" >&2;
+  printf "nanime: all loader started successfully\n\n" >&2;
+  printf "nanime: wait loader to finish\n" >&2;
+  printf "nanime: waiting..\r" >&2;
+  wait;
+  printf "nanime: waiting.. done!\n\n" >&2;
+
+  # TODO: HISTORIC
+  # Default server
+  # (Doesn't works in 2020)
+  #
+  # SOURCES+=$(cat "${FILES[@]}" \
+  #   | grep 'data-src' \
+  #   | awk -F"\"" '{print $2}')
+
+  # TODO: PROTOTYPE
+  # SOURCES+=$(cat "${FILES[@]}" \
+  #   | grep 'link_server' \
+  #   | awk -F"\"" '{print $4}')
+
+  # TODO: PROTOTYPE
+  # SOURCES+=$(cat "${FILES[@]}" \
+  #   | awk -F"\"" '/link_server/ && /uservideo/ {print $4;}')
+
+  # TODO: HISTORIC
+  # Naniplay server
+  #
+  # SOURCES+=$(curl https://www.naniplay.com/api/source/$(cat "${FILES[@]}" \
+  #   | grep 'change-server' \
+  #   | awk -F"\"" '{print $12}' \
+  #   | xargs curl 2>/dev/null \
+  #   | awk -F"v/" '{print $2}') \
+  #   --data 'd=naniplay.com' 2>/dev/null \
+  #   | jq '.data[0] .file')
+  # echo $SOURCES
+
+  # TODO: HISTORIC
+  # SOURCES+=$(cat "${FILES[@]}" \
+  #   | grep 'change-server' \
+  #   | awk -F"\"" '{print $12}')
+
+  # TODO: HISTORIC
+  # for i in
+    # | xargs curl 2>/dev/null)
+    # | awk -F"v/" '{print $2}') \
+    # --data 'd=naniplay.com' 2>/dev/null \
+    # | jq '.data[0] .file'
+
+  for file in "${FILES[@]}"; do
+    test -f "${file}";
+  done && SOURCES+=$(cat "${FILES[@]}");
+  clean_temp_files;
+
+  SOURCES=(${SOURCES[@]}); # remove empty elements
+
+  NUM_LOADED=${#SOURCES[@]};
+  NUM_EPS=${#FILES[@]};
+  NUM_MISSED=$(( $NUM_EPS - $NUM_LOADED ));
+
+  (( $NUM_LOADED < $NUM_EPS )) \
+    && warn $NUM_MISSED episodes can not be loaded due to \'unavailability\' or \'URL inconsistency\' >&2;
+  if (( ${NUM_LOADED} == 0 )); then
+    warn not found on current server;
+    # TODO: HISTORIC
+    # warn changing server to naniplay
+    # naniplay
+  fi;
+
+  say loaded ${NUM_LOADED}/${NUM_EPS} episodes >&2;
+
+  start_mpv "${SOURCES[@]}";
+};
+
+if [[ ${PARAM} == '-h' ]]; then
+  usage;
+elif [[ ${PARAM} == '-v' ]]; then
+  license;
+elif [[ -z ${LINK} || -z ${BEGIN} || -z ${END} ]]; then
+  usage;
+  miss_arguments_alert;
+elif [[ ${LINK:0:4} != 'http' ]]; then
+  host_unresolved_alert;
+else
+  enjoy;
+fi;
