@@ -53,3 +53,8 @@ host_unresolved_alert() {
 miss_arguments_alert() {
   warn "missing arguments";
 };
+
+usage() {
+  say "usage:";
+  say "nanime <anime-url-from-nanime> <start-episode> <end-episode>";
+};
