@@ -116,3 +116,18 @@ get_total_episode() {
   ${CURL} "$1" 2>/dev/null \
     | awk "$CODE";
 };
+
+get_video_url() {
+  CODE='
+    BEGIN {
+      FS="(value=\"|\")";
+    }
+
+    /link_server/ && /uservideo/ {
+      print $8
+    }
+  ';
+
+  ${CURL} "$1" 2>/dev/null \
+    | awk "$CODE";
+};
