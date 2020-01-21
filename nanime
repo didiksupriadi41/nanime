@@ -29,6 +29,7 @@ PARAM="$@";
 
 CURL=$(command -v curl);
 MPV=$(command -v mpv);
+MAIN_PAGE=$(${CURL} "$1" 2>/dev/null);
 
 declare -a EPS;
 declare -a FILES;
@@ -82,7 +83,7 @@ get_episode_url() {
     }
   ';
 
-  ${CURL} "$1" 2>/dev/null \
+  echo "${MAIN_PAGE}" \
     | awk "$CODE";
 };
 
