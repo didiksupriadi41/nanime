@@ -152,3 +152,9 @@ validate_episode_bound() {
     warn the maximum number of episodes from the requested anime is unknown;
   fi;
 };
+
+clean_temp_files() {
+  for i in "${FILES[@]}"; do
+    rm -f $i
+  done
+};
