@@ -85,3 +85,17 @@ get_episode_url() {
   ${CURL} "$1" 2>/dev/null \
     | awk "$CODE";
 };
+
+get_episode_title() {
+  CODE='
+    BEGIN {
+      FS="anime/";
+    }
+
+    {
+      print $2;
+    }
+  ';
+
+  echo "$1" | awk "$CODE";
+};
