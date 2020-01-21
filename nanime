@@ -165,3 +165,8 @@ progress_bar() {
   percent=$(( "$1" * 100 / $TOTAL ));
   printf "nanime: ($percent%%) $bar\r" >&2;
 };
+
+start_mpv() {
+  echo "$@" \
+    | xargs -r ${MPV};
+};
