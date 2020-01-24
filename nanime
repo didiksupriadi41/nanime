@@ -30,7 +30,7 @@ PARAM=( "$@" );
 CURL=$(command -v curl);
 MPV=$(command -v mpv);
 XARGS=$(command -v xargs);
-MAIN_PAGE=$(${CURL} "$1" 2>/dev/null);
+MAIN_PAGE=$(${CURL} -L "$1" 2>/dev/null);
 
 declare -a EPS;
 declare -a FILES;
@@ -118,7 +118,7 @@ get_video_url() {
     }
   ';
 
-  ${CURL} "$1" 2>/dev/null \
+  ${CURL} -L "$1" 2>/dev/null \
     | awk "$CODE";
 };
 
