@@ -172,7 +172,6 @@ enjoy() {
   j=0;
   for (( i=BEGIN-1; i<END; i++)) {
     mapfile -t -O $j FILES < <( mktemp --tmpdir='/tmp' nanime."$(get_episode_title "${LINK}")"-episode-$((j + 1)).XXX);
-    echo "${FILES[@]}"
     trap "clean_temp_files" EXIT;
     get_video_url "${EPS[$i]}" >> "${FILES[$j]}" &
 
