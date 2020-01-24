@@ -1,8 +1,8 @@
-#!/bin/sh
+#!/bin/bash
 # ---------------------------------------------------------------------
 # Author: Didik Supriadi
 # ---------------------------------------------------------------------
-# Nanime is a script to easily watch anime from nanime.tv
+# Nanime is a script to easily watch anime from nanime.yt
 # Copyright (C) 2020  Didik Supriadi
 #
 # This program is free software: you can redistribute it and/or modify
@@ -25,11 +25,12 @@
 LINK="$1";
 BEGIN="$2";
 END="$3";
-PARAM="$@";
+PARAM=( "$@" );
 
 CURL=$(command -v curl);
 MPV=$(command -v mpv);
-MAIN_PAGE=$(${CURL} "$1" 2>/dev/null);
+XARGS=$(command -v xargs);
+MAIN_PAGE=$(${CURL} -L "$1" 2>/dev/null);
 
 declare -a EPS;
 declare -a FILES;
@@ -39,11 +40,11 @@ YELLOW='\033[1;33m';
 NOCOLOR='\033[0m';
 
 say() {
-  echo -e "nanime: $@";
+  echo -e "nanime: $*";
 };
 
 warn() {
-  say "${YELLOW}[warning] $@${NOCOLOR}";
+  say "${YELLOW}[warning] $*${NOCOLOR}";
 };
 
 host_unresolved_alert() {
@@ -117,25 +118,25 @@ get_video_url() {
     }
   ';
 
-  ${CURL} "$1" 2>/dev/null \
+  ${CURL} -L "$1" 2>/dev/null \
     | awk "$CODE";
 };
 
 validate_episode_bound() {
   MIN=1;
-  EPS=($(get_episode_url ${LINK}));
+  mapfile -t EPS < <(get_episode_url "${LINK}");
   MAX="${#EPS[@]}";
 
-  if (( ${BEGIN} < $MIN )); then
-    warn ${BEGIN} is under the minimum episode number;
+  if (( BEGIN < MIN )); then
+    warn "${BEGIN}" is under the minimum episode number;
     warn changing start episode to $MIN;
     BEGIN=$MIN;
   fi;
 
-  if [[ -n $MAX ]] && (( $MAX > 0 )); then
-    if (( ${END} > $MAX )); then
-      warn ${END} is exceeding the maximum number of episodes in requested anime;
-      warn changing last episode to $MAX;
+  if [[ -n $MAX ]] && (( MAX > 0 )); then
+    if (( END > MAX )); then
+      warn "${END}" is exceeding the maximum number of episodes in requested anime;
+      warn changing last episode to "$MAX";
       END=$MAX;
     fi;
   else
@@ -145,38 +146,34 @@ validate_episode_bound() {
 
 clean_temp_files() {
   for i in "${FILES[@]}"; do
-    rm -f $i
-  done
+    rm -f "$i";
+  done;
 };
 
 progress_bar() {
-  progress=$(( "$1" * 30 / $TOTAL ));
-  bar=$(eval "printf '#%.0s' {1.."$(($progress))"}");
-  percent=$(( "$1" * 100 / $TOTAL ));
+  progress=$(( "$1" * 30 / TOTAL ));
+  bar=$(eval "printf '#%.0s' {1.."$((progress))"}");
+  percent=$(( "$1" * 100 / TOTAL ));
   printf "nanime: ($percent%%) $bar\r" >&2;
 };
 
 start_mpv() {
   echo "$@" \
-    | xargs -r ${MPV};
+    | ${XARGS} -r "${MPV}";
 };
 
 enjoy() {
   validate_episode_bound;
 
-  TOTAL=$(( ${END} - ${BEGIN} + 1 ));
+  TOTAL=$(( END - BEGIN + 1 ));
 
   say loading $TOTAL episodes >&2;
 
   j=0;
-  for (( i=${BEGIN}-1; i<${END}; i++)) {
-    FILES+=(
-      $(
-        mktemp --tmpdir='/tmp' nanime.$(get_episode_title ${LINK})-episode-$((j + 1)).XXX
-      )
-    );
+  for (( i=BEGIN-1; i<END; i++)) {
+    mapfile -t -O $j FILES < <( mktemp --tmpdir='/tmp' nanime."$(get_episode_title "${LINK}")"-episode-$((j + 1)).XXX);
     trap "clean_temp_files" EXIT;
-    get_video_url ${EPS[$i]} >> ${FILES[$j]} &
+    get_video_url "${EPS[$i]}" >> "${FILES[$j]}" &
 
     j=$(( j + 1 ));
     progress_bar "$j";
@@ -239,32 +236,32 @@ enjoy() {
 
   for file in "${FILES[@]}"; do
     test -f "${file}";
-  done && SOURCES+=$(cat "${FILES[@]}");
+  done && mapfile -t SOURCES < <(cat "${FILES[@]}");
   clean_temp_files;
 
-  SOURCES=(${SOURCES[@]}); # remove empty elements
+  SOURCES=("${SOURCES[@]}"); # remove empty elements
 
   NUM_LOADED=${#SOURCES[@]};
   NUM_EPS=${#FILES[@]};
-  NUM_MISSED=$(( $NUM_EPS - $NUM_LOADED ));
+  NUM_MISSED=$(( NUM_EPS - NUM_LOADED ));
 
-  (( $NUM_LOADED < $NUM_EPS )) \
+  (( NUM_LOADED < NUM_EPS )) \
     && warn $NUM_MISSED episodes can not be loaded due to \'unavailability\' or \'URL inconsistency\' >&2;
-  if (( ${NUM_LOADED} == 0 )); then
+  if (( NUM_LOADED == 0 )); then
     warn not found on current server;
     # TODO: HISTORIC
     # warn changing server to naniplay
     # naniplay
   fi;
 
-  say loaded ${NUM_LOADED}/${NUM_EPS} episodes >&2;
+  say loaded "${NUM_LOADED}"/"${NUM_EPS}" episodes >&2;
 
   start_mpv "${SOURCES[@]}";
 };
 
-if [[ ${PARAM} == '-h' ]]; then
+if [[ ${PARAM[0]} == '-h' ]]; then
   usage;
-elif [[ ${PARAM} == '-v' ]]; then
+elif [[ ${PARAM[0]} == '-v' ]]; then
   license;
 elif [[ -z ${LINK} || -z ${BEGIN} || -z ${END} ]]; then
   usage;
