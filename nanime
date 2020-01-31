@@ -102,6 +102,27 @@ get_episode_title() {
   echo "$1" | awk "$CODE";
 };
 
+get_video_url_naniplay() {
+  CODE='
+    BEGIN {
+      FS="(value=\"|\")";
+    }
+
+    /link_server/ && /naniplay/ {
+      for (i = 1; i <= NF; i++) {
+        if ($i ~ /http/ && $i ~ /naniplay/) {
+          print $i;
+          exit;
+        }
+      }
+    }
+  ';
+
+  api_url_prefix='https://www.naniplay.com/api/source/'
+  json_url=$api_url_prefix$(curl "$1" 2>/dev/null | awk -F"/v/" '{print $(NF)}')
+  video_url=$(curl "$json_url" --data 'd=naniplay.com' 2>/dev/null | jq '.data[0] .file')
+};
+
 get_video_url_uservideo() {
   CODE='
     BEGIN {
