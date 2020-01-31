@@ -102,7 +102,7 @@ get_episode_title() {
   echo "$1" | awk "$CODE";
 };
 
-get_video_url() {
+get_video_url_uservideo() {
   CODE='
     BEGIN {
       FS="(value=\"|\")";
@@ -173,7 +173,7 @@ enjoy() {
   for (( i=BEGIN-1; i<END; i++)) {
     mapfile -t -O $j FILES < <( mktemp --tmpdir='/tmp' nanime."$(get_episode_title "${LINK}")"-episode-$((j + 1)).XXX);
     trap "clean_temp_files" EXIT;
-    get_video_url "${EPS[$i]}" >> "${FILES[$j]}" &
+    get_video_url_uservideo "${EPS[$i]}" >> "${FILES[$j]}" &
 
     j=$(( j + 1 ));
     progress_bar "$j";
