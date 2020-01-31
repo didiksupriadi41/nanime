@@ -102,7 +102,28 @@ get_episode_title() {
   echo "$1" | awk "$CODE";
 };
 
-get_video_url() {
+get_video_url_naniplay() {
+  CODE='
+    BEGIN {
+      FS="(value=\"|\")";
+    }
+
+    /link_server/ && /naniplay/ {
+      for (i = 1; i <= NF; i++) {
+        if ($i ~ /http/ && $i ~ /naniplay/) {
+          print $i;
+          exit;
+        }
+      }
+    }
+  ';
+
+  api_url_prefix='https://www.naniplay.com/api/source/'
+  json_url=$api_url_prefix$(curl "$1" 2>/dev/null | awk -F"/v/" '{print $(NF)}')
+  video_url=$(curl "$json_url" --data 'd=naniplay.com' 2>/dev/null | jq '.data[0] .file')
+};
+
+get_video_url_uservideo() {
   CODE='
     BEGIN {
       FS="(value=\"|\")";
@@ -173,7 +194,7 @@ enjoy() {
   for (( i=BEGIN-1; i<END; i++)) {
     mapfile -t -O $j FILES < <( mktemp --tmpdir='/tmp' nanime."$(get_episode_title "${LINK}")"-episode-$((j + 1)).XXX);
     trap "clean_temp_files" EXIT;
-    get_video_url "${EPS[$i]}" >> "${FILES[$j]}" &
+    get_video_url_uservideo "${EPS[$i]}" >> "${FILES[$j]}" &
 
     j=$(( j + 1 ));
     progress_bar "$j";
@@ -192,47 +213,6 @@ enjoy() {
   printf "nanime: waiting..\r" >&2;
   wait;
   printf "nanime: waiting.. done!\n\n" >&2;
-
-  # TODO: HISTORIC
-  # Default server
-  # (Doesn't works in 2020)
-  #
-  # SOURCES+=$(cat "${FILES[@]}" \
-  #   | grep 'data-src' \
-  #   | awk -F"\"" '{print $2}')
-
-  # TODO: PROTOTYPE
-  # SOURCES+=$(cat "${FILES[@]}" \
-  #   | grep 'link_server' \
-  #   | awk -F"\"" '{print $4}')
-
-  # TODO: PROTOTYPE
-  # SOURCES+=$(cat "${FILES[@]}" \
-  #   | awk -F"\"" '/link_server/ && /uservideo/ {print $4;}')
-
-  # TODO: HISTORIC
-  # Naniplay server
-  #
-  # SOURCES+=$(curl https://www.naniplay.com/api/source/$(cat "${FILES[@]}" \
-  #   | grep 'change-server' \
-  #   | awk -F"\"" '{print $12}' \
-  #   | xargs curl 2>/dev/null \
-  #   | awk -F"v/" '{print $2}') \
-  #   --data 'd=naniplay.com' 2>/dev/null \
-  #   | jq '.data[0] .file')
-  # echo $SOURCES
-
-  # TODO: HISTORIC
-  # SOURCES+=$(cat "${FILES[@]}" \
-  #   | grep 'change-server' \
-  #   | awk -F"\"" '{print $12}')
-
-  # TODO: HISTORIC
-  # for i in
-    # | xargs curl 2>/dev/null)
-    # | awk -F"v/" '{print $2}') \
-    # --data 'd=naniplay.com' 2>/dev/null \
-    # | jq '.data[0] .file'
 
   for file in "${FILES[@]}"; do
     test -f "${file}";
