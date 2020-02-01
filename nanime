@@ -58,7 +58,7 @@ miss_arguments_alert() {
 
 usage() {
   say "usage:";
-  say "nanime <anime-url-from-nanime> <start-episode> <end-episode>";
+  say " nanime <anime-url-from-nanime> <start-episode> <end-episode>";
 };
 
 license() {
@@ -199,9 +199,10 @@ enjoy() {
 
   say loading $TOTAL episodes >&2;
 
+  episode_title=$(get_episode_title "${LINK}");
   j=0;
   for (( i=BEGIN-1; i<END; i++)) {
-    mapfile -t -O $j FILES < <( mktemp --tmpdir='/tmp' nanime."$(get_episode_title "${LINK}")"-episode-$((j + 1)).XXX);
+    mapfile -t -O $j FILES < <( mktemp --tmpdir='/tmp' nanime."$episode_title"-episode-$((j + 1)).XXX);
     trap "clean_temp_files" EXIT;
     get_video_url_uservideo "${EPS[$i]}" >> "${FILES[$j]}" &
 
@@ -247,6 +248,7 @@ enjoy() {
 
   start_mpv "${SOURCES[@]}";
 };
+
 
 if [[ ${PARAM[0]} == '-h' ]]; then
   usage;
