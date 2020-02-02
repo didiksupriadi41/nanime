@@ -204,7 +204,12 @@ enjoy() {
   for (( i=BEGIN-1; i<END; i++)) {
     mapfile -t -O $j FILES < <( mktemp --tmpdir='/tmp' nanime."$episode_title"-episode-$((j + 1)).XXX);
     trap "clean_temp_files" EXIT;
-    get_video_url_uservideo "${EPS[$i]}" >> "${FILES[$j]}" &
+
+    if (( PLAY_OPTS == 2 )); then
+      get_video_url_naniplay "${EPS[$i]}" >> "${FILES[$j]}" &
+    elif (( PLAY_OPTS == 1 )); then
+      get_video_url_uservideo "${EPS[$i]}" >> "${FILES[$j]}" &
+    fi
 
     j=$(( j + 1 ));
     progress_bar "$j";
@@ -259,6 +264,13 @@ elif [[ -z ${LINK} || -z ${BEGIN} || -z ${END} ]]; then
   miss_arguments_alert;
 elif [[ ${LINK:0:4} != 'http' ]]; then
   host_unresolved_alert;
-else
-  enjoy;
+elif [[ ${PARAM[0]} =~ '-a2' ]]; then
+  PLAY_OPTS=2;
+  enjoy
+elif [[ ${PARAM[0]} =~ '-a1' ]]; then
+  PLAY_OPTS=1;
+  enjoy
+else # -a1
+  PLAY_OPTS=1;
+  enjoy
 fi;
