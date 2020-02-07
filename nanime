@@ -200,19 +200,15 @@ enjoy() {
   say loading $TOTAL episodes >&2;
 
   episode_title=$(get_episode_title "${LINK}");
-  j=0;
+  episode_number=0;
   for (( i=BEGIN-1; i<END; i++)) {
-    mapfile -t -O $j FILES < <( mktemp --tmpdir='/tmp' nanime."$episode_title"-episode-$((j + 1)).XXX);
+    mapfile -t -O $episode_number FILES < <( mktemp --tmpdir='/tmp' nanime."$episode_title"-episode-$((episode_number + 1)).XXX);
     trap "clean_temp_files" EXIT;
 
-    if (( PLAY_OPTS == 2 )); then
-      get_video_url_naniplay "${EPS[$i]}" >> "${FILES[$j]}" &
-    elif (( PLAY_OPTS == 1 )); then
-      get_video_url_uservideo "${EPS[$i]}" >> "${FILES[$j]}" &
-    fi
+    get_video_url_uservideo "${EPS[$i]}" >> "${FILES[$episode_number]}" &
 
-    j=$(( j + 1 ));
-    progress_bar "$j";
+    episode_number=$(( episode_number + 1 ));
+    progress_bar "$episode_number";
     # Experiment:
     # Wait every N curl operation.
     #
@@ -254,7 +250,6 @@ enjoy() {
   start_mpv "${SOURCES[@]}";
 };
 
-
 if [[ ${PARAM[0]} == '-h' ]]; then
   usage;
 elif [[ ${PARAM[0]} == '-v' ]]; then
@@ -264,13 +259,6 @@ elif [[ -z ${LINK} || -z ${BEGIN} || -z ${END} ]]; then
   miss_arguments_alert;
 elif [[ ${LINK:0:4} != 'http' ]]; then
   host_unresolved_alert;
-elif [[ ${PARAM[0]} =~ '-a2' ]]; then
-  PLAY_OPTS=2;
-  enjoy
-elif [[ ${PARAM[0]} =~ '-a1' ]]; then
-  PLAY_OPTS=1;
-  enjoy
-else # -a1
-  PLAY_OPTS=1;
-  enjoy
+else
+  enjoy;
 fi;
