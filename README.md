@@ -9,7 +9,7 @@ Easily watch anime from [nanime.yt](https://nanime.yt) (Indonesian-subbed) in co
 
 ## Installations
 
-nanime packages is currently distributed in the following Linux distributions.
+nanime packages are currently distributed in the following Linux distributions.
 
 Click the logo for specific instructions.
 
