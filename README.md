@@ -11,13 +11,15 @@ Easily watch anime from [nanime.yt](https://nanime.yt) (Indonesian-subbed) in co
 
 nanime packages are currently distributed in the following Linux distributions.
 
-Click the logo for specific instructions.
+Click one of these logos for OS specific instructions.
 
-[![Fedora](https://i.imgur.com/GUeW8ka.png)](https://copr.fedorainfracloud.org/coprs/didiksupriadi41/nanime/package/nanime/)
-[![OpenSUSE](https://i.imgur.com/1XQLuGI.png)](https://copr.fedorainfracloud.org/coprs/didiksupriadi41/nanime/package/nanime/)
-[![Centos](https://i.imgur.com/5jlIp5P.png)](https://copr.fedorainfracloud.org/coprs/didiksupriadi41/nanime/package/nanime/)
-[![Ubuntu](https://i.imgur.com/nbZKSjt.png)](https://launchpad.net/~didiksupriadi41/+archive/ubuntu/nanime)
-[![Mageia](https://i.imgur.com/xUq8MLZ.png)](https://copr.fedorainfracloud.org/coprs/didiksupriadi41/nanime/package/nanime/)
+| [![Fedora](https://i.imgur.com/GUeW8ka.png)](https://copr.fedorainfracloud.org/coprs/didiksupriadi41/nanime/package/nanime/) | [![OpenSUSE](https://i.imgur.com/1XQLuGI.png)](https://copr.fedorainfracloud.org/coprs/didiksupriadi41/nanime/package/nanime/) | [![CentOS](https://i.imgur.com/5jlIp5P.png)](https://copr.fedorainfracloud.org/coprs/didiksupriadi41/nanime/package/nanime/) | [![Ubuntu](https://i.imgur.com/nbZKSjt.png)](https://launchpad.net/~didiksupriadi41/+archive/ubuntu/nanime) | [![Mageia](https://i.imgur.com/xUq8MLZ.png)](https://copr.fedorainfracloud.org/coprs/didiksupriadi41/nanime/package/nanime/) |
+|---|---|---|---|---|
+| Fedora 30 | openSUSE Leap 15.1 | Centos stream | Ubuntu 16.04 Xenial | Mageia 7 |
+| Fedora 31 | openSUSE Tumbleweed | Epel for CentOS 6 | Ubuntu 18.04 Bionic | Mageia cauldron |
+| Fedora 32 |  | Epel for CentOS 7 | Ubuntu 19.04 Disco |  |
+| Fedora rawhide |  | Epel for CentOS 8 | Ubuntu 19.10 Eoan   |   |
+|   |   |   | Ubuntu 20.04 Focal |   |
 
 ## Usage
 
