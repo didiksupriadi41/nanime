@@ -5,7 +5,7 @@
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/didiksupriadi41/nanime?style=flat-square)](https://github.com/didiksupriadi41/nanime/releases/tag/0.3)
 [![License](https://img.shields.io/github/license/didiksupriadi41/nanime?style=flat-square)](https://github.com/didiksupriadi41/nanime/blob/develop/LICENSE)
 
-Easily watch anime from [nanime.yt](https://nanime.yt) (Indonesian-subbed) in command line interface powered by mpv, a powerful media player.
+Easily watch anime from [nanime.in](https://nanime.in) (Indonesian-subbed) in command line interface powered by mpv, a powerful media player.
 
 ## Installations
 
